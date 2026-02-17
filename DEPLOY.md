@@ -13,6 +13,44 @@ git push -u origin main
 
 ---
 
+## 〇一、自动部署（GitHub Actions）
+
+推送 `main` 分支后，GitHub Actions 会自动 SSH 到阿里云服务器执行 `git pull` 并重启服务。
+
+### 1. 配置 GitHub Secrets
+
+在仓库页：**Settings → Secrets and variables → Actions**，新增 Secrets：
+
+| 名称 | 说明 | 示例 |
+|------|------|------|
+| `SSH_HOST` | 服务器 IP 或域名 | `123.45.67.89` 或 `ref.jingyanrong.com` |
+| `SSH_USER` | SSH 登录用户名 | `root` |
+| `SSH_PRIVATE_KEY` | SSH 私钥完整内容（含 `-----BEGIN...` 和 `-----END...`）。对应公钥需已添加到服务器 `~/.ssh/authorized_keys` | 粘贴私钥 |
+| `SSH_PORT` | SSH 端口（可选，默认 22） | `22` |
+
+### 2. 服务器端准备
+
+- 已在服务器上完成首次部署（见下文「阿里云轻量服务器部署」）
+- SSH 用户具备 `sudo systemctl restart refbackend` 权限（建议配置免密 sudo）
+- 部署路径为 `/opt/refbackend`（不同路径需修改 `.github/workflows/deploy.yml` 中的 `cd /opt/refbackend`）
+
+### 3. 免密 sudo 配置（可选）
+
+若 SSH 用户执行 `sudo systemctl restart` 时被要求输入密码，可配置免密：
+
+```bash
+sudo visudo
+# 在文件末尾添加（将 root 换成你的 SSH_USER）：
+root ALL=(ALL) NOPASSWD: /bin/systemctl restart refbackend
+root ALL=(ALL) NOPASSWD: /bin/systemctl status refbackend
+```
+
+### 4. 查看部署结果
+
+推送后到 **Actions** 标签页查看运行日志。
+
+---
+
 ## 一、阿里云轻量服务器部署
 
 ### 1. 前置条件
@@ -26,7 +64,7 @@ git push -u origin main
 ```bash
 # SSH 登录服务器后
 cd /opt  # 或你选定的目录
-sudo git clone https://github.com/jingyanrong/refbackend.git
+sudo git clone https://github.com/jingyanrong548-del/refbackend.git
 cd refbackend
 
 # 创建虚拟环境
@@ -79,7 +117,10 @@ server {
 sudo certbot --nginx -d ref.jingyanrong.com
 ```
 
-### 5. 更新部署（从 GitHub 拉取后重启）
+### 5. 更新部署
+
+- **自动**：推送到 GitHub `main` 分支后，GitHub Actions 会自动部署（需先配置 Secrets）
+- **手动**：
 
 ```bash
 cd /opt/refbackend
