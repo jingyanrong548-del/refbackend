@@ -4,8 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-Group=www-data
+# 不指定 User/Group，以 root 运行，避免 www-data 不存在导致 status=217/USER
 WorkingDirectory=/www/refprop/refbackend
 Environment="RPPREFIX=/www/refprop/Refprop10.0"
 Environment="PATH=/www/refprop/refbackend/venv/bin:/usr/local/bin:/usr/bin:/bin"
