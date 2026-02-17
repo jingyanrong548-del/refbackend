@@ -70,8 +70,28 @@ root ALL=(ALL) NOPASSWD: /bin/systemctl status refbackend
 ### 1. 前置条件
 
 - 阿里云轻量应用服务器（Linux）
-- 已安装 REFPROP 10.0（含 REFPRP64.DLL 或 librefprop.so + FLUIDS 文件夹）
+- **REFPROP 10.0**：Linux 需 `librefprop.so` + `FLUIDS` 文件夹（见下方「REFPROP Linux 库」）
 - Python 3.10+
+
+#### REFPROP Linux 库（必须）
+
+ctREFPROP 在 Linux 上需要 `librefprop.so`，不能使用 Windows 的 REFPRP64.DLL。
+
+1. **获取 REFPROP 数据**：从 Windows 安装目录复制 `FLUIDS`、`MIXTURES` 到 `/www/refprop/Refprop10.0/`
+2. **编译 librefprop.so**：使用 NIST 官方 [REFPROP-cmake](https://github.com/usnistgov/REFPROP-cmake) 从 Fortran 源码编译
+3. **放置**：将生成的 `librefprop.so` 放入 `/www/refprop/Refprop10.0/`，与 FLUIDS 同目录
+4. **环境**：`deploy/refbackend.env` 中 `RPPREFIX=/www/refprop/Refprop10.0`，`WINE_REFPROP_URL=` 留空
+
+若尚未编译好 librefprop.so，可运行 `wine_refprop_backend` 作为 8002 后端（同样需要 librefprop.so，与直接使用 ctREFPROP 条件相同）：
+
+```bash
+# 编辑 deploy/refbackend.env，设置 WINE_REFPROP_URL=http://127.0.0.1:8002
+# 安装并启动 8002 后端
+sudo cp deploy/refprop8002.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable refprop8002
+sudo systemctl start refprop8002
+```
 
 ### 2. 首次部署
 

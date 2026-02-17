@@ -37,7 +37,7 @@ Windows 若使用默认 MSI 安装，`RPPREFIX` 通常已自动设置。
 ## 运行
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8003
 ```
 
 或：
@@ -54,7 +54,7 @@ python main.py
 
 ```bash
 # PT 输入：P=101.325 kPa, T=300 K，工质 R32
-curl -X POST "http://localhost:8000/calculate" \
+curl -X POST "http://localhost:8003/calculate" \
   -H "Content-Type: application/json" \
   -d '{"fluid_string":"R32","input_type":"PT","value1":101.325,"value2":300}'
 ```

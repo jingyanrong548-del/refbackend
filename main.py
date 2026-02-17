@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from config import WINE_REFPROP_URL
+from config import RPPREFIX, WINE_REFPROP_URL
 from refprop_service import calculate_properties
 
 
@@ -78,6 +78,7 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
             input_type=req.input_type,
             value1=req.value1,
             value2=req.value2,
+            rpprefix=RPPREFIX,
             wine_refprop_url=WINE_REFPROP_URL or None,
         )
         return CalculateResponse(**result)

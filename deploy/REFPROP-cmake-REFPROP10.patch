@@ -1,0 +1,19 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -328,6 +328,18 @@ foreach (source ${APP_SOURCES})
+  endforeach()
+  endif(${REFPROP_SOURCE_AUTOFIX})
+  
++# REFPROP 10: 排除导致 multiple definition 的冗余源文件
++set(REFPROP_10_EXCLUDE CORE_DE CORE_MLT CORE_STN CORE_PH0 CORE_CPP CORE_BWR CORE_ECS FLSH_SUB IDEALGAS MIX_AGA8 REALGAS SETUP2 TRNS_ECS TRNS_VIS UTILITY)
++foreach(excl ${REFPROP_10_EXCLUDE})
++  foreach(src ${APP_SOURCES})
++    if("${src}" MATCHES "/${excl}\\.FOR$")
++      list(REMOVE_ITEM APP_SOURCES "${src}")
++    endif()
++  endforeach()
++endforeach()
++
+  # Grep out the version from the source
+  FILE(READ "${REFPROP_FORTRAN_PATH}/SETUP.FOR" CONTENTS)
+  if (NOT CONTENTS)

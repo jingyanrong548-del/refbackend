@@ -104,11 +104,20 @@ def calculate_properties(
 
     url = wine_refprop_url or WINE_REFPROP_URL
     if url:
-        from wine_refprop_client import calculate_via_wine
-        return calculate_via_wine(url, fluid_string, input_type, value1, value2)
+        try:
+            from wine_refprop_client import calculate_via_wine
+            return calculate_via_wine(url, fluid_string, input_type, value1, value2)
+        except (RuntimeError, OSError) as e:
+            # 8002 未启动或连接失败时，回退到 ctREFPROP
+            err_msg = str(e).lower()
+            if "connection" in err_msg or "refused" in err_msg or "请求失败" in err_msg:
+                pass  # 继续尝试 ctREFPROP
+            else:
+                raise
 
     if rpprefix is None:
-        rpprefix = os.environ.get("RPPREFIX", "")
+        from config import RPPREFIX
+        rpprefix = RPPREFIX
     
     if not rpprefix or not os.path.isdir(rpprefix):
         raise RuntimeError(

@@ -128,4 +128,4 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 1. 安装 REFPROP 10.0，确保存在 `REFPRP64.DLL`（Windows）或对应 `.so`/`.dylib`，以及 `FLUIDS` 文件夹。
 2. 设置环境变量 `RPPREFIX` 指向 REFPROP 安装根目录。
-3. 启动服务：`uvicorn main:app --host 0.0.0.0 --port 8000`
+3. 启动服务：`uvicorn main:app --host 0.0.0.0 --port 8003`
