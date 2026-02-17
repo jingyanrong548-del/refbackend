@@ -3,7 +3,7 @@ REFPROP 热力学计算服务
 封装 ctREFPROP 调用，支持纯工质和混合工质
 """
 import os
-from typing import Optional
+from typing import List, Optional, Tuple
 
 # REFPROP 错误码：-9999980, -9999990 等表示两相区未定义的属性
 REFPROP_UNDEFINED = -9999970
@@ -11,7 +11,7 @@ REFPROP_2PHASE_CP_W = -9999980
 REFPROP_2PHASE_CV = -9999990
 
 
-def parse_fluid_string(fluid_string: str) -> tuple[str, list[float]]:
+def parse_fluid_string(fluid_string: str) -> Tuple[str, List[float]]:
     """
     解析工质字符串，支持多种格式：
     
@@ -84,27 +84,36 @@ def calculate_properties(
     value1: float,
     value2: float,
     rpprefix: Optional[str] = None,
+    wine_refprop_url: Optional[str] = None,
 ) -> dict:
     """
-    调用 REFPROP 计算热力学性质
+    计算热力学性质。优先使用 Wine REFPROP 后端（方案 B），否则使用 ctREFPROP。
     
     Args:
         fluid_string: 工质字符串 (如 "R32", "R32&R125|0.5&0.5")
-        input_type: 输入类型 ("PT", "PQ", "PH", "TD" 等)
+        input_type: 输入类型 ("PT", "PQ", "PH", "TD" 等；Wine 后端仅支持 PT)
         value1: 第一个输入参数
         value2: 第二个输入参数
-        rpprefix: REFPROP 安装路径，默认从环境变量 RPPREFIX 读取
+        rpprefix: REFPROP 安装路径（ctREFPROP 用）
+        wine_refprop_url: Wine 后端 URL，设置则转发请求到该后端
     
     Returns:
         包含 T, P, D, H, S, Q, CP, CV, W 的字典
     """
+    from config import WINE_REFPROP_URL
+
+    url = wine_refprop_url or WINE_REFPROP_URL
+    if url:
+        from wine_refprop_client import calculate_via_wine
+        return calculate_via_wine(url, fluid_string, input_type, value1, value2)
+
     if rpprefix is None:
         rpprefix = os.environ.get("RPPREFIX", "")
     
     if not rpprefix or not os.path.isdir(rpprefix):
         raise RuntimeError(
             f"REFPROP 路径未配置或无效: {rpprefix}. "
-            "请设置环境变量 RPPREFIX 指向 REFPROP 安装目录（含 REFPRP64.DLL 和 FLUIDS 文件夹）"
+            "请设置环境变量 RPPREFIX 或 WINE_REFPROP_URL（方案 B）"
         )
     
     from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary

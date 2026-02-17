@@ -4,10 +4,12 @@
 """
 from contextlib import asynccontextmanager
 
+from typing import Optional
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from config import RPPREFIX
+from config import RPPREFIX, WINE_REFPROP_URL
 from refprop_service import calculate_properties
 
 
@@ -29,15 +31,15 @@ class CalculateRequest(BaseModel):
 
 class CalculateResponse(BaseModel):
     """POST /calculate 响应体"""
-    T: float | None = Field(None, description="温度 [K]")
-    P: float | None = Field(None, description="压力 [kPa]")
-    D: float | None = Field(None, description="密度 [mol/dm³]")
-    H: float | None = Field(None, description="焓 [J/mol]")
-    S: float | None = Field(None, description="熵 [J/(mol·K)]")
-    Q: float | None = Field(None, description="干度 (摩尔基，两相区 0~1)")
-    CP: float | None = Field(None, description="定压比热 [J/(mol·K)]")
-    CV: float | None = Field(None, description="定容比热 [J/(mol·K)]")
-    W: float | None = Field(None, description="声速 [m/s]")
+    T: Optional[float] = Field(None, description="温度 [K]")
+    P: Optional[float] = Field(None, description="压力 [kPa]")
+    D: Optional[float] = Field(None, description="密度 [mol/dm³]")
+    H: Optional[float] = Field(None, description="焓 [J/mol]")
+    S: Optional[float] = Field(None, description="熵 [J/(mol·K)]")
+    Q: Optional[float] = Field(None, description="干度 (摩尔基，两相区 0~1)")
+    CP: Optional[float] = Field(None, description="定压比热 [J/(mol·K)]")
+    CV: Optional[float] = Field(None, description="定容比热 [J/(mol·K)]")
+    W: Optional[float] = Field(None, description="声速 [m/s]")
 
 
 @asynccontextmanager
@@ -77,6 +79,7 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
             value1=req.value1,
             value2=req.value2,
             rpprefix=RPPREFIX,
+            wine_refprop_url=WINE_REFPROP_URL or None,
         )
         return CalculateResponse(**result)
     except ValueError as e:
@@ -93,4 +96,4 @@ def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8003)
