@@ -1,5 +1,18 @@
 # REFPROP API 部署指南
 
+## 零、GitHub 同步（首次）
+
+1. 在 GitHub 新建仓库 `refbackend`：<https://github.com/new>
+2. 本地推送：
+
+```bash
+cd /path/to/refbackend
+git remote add origin https://github.com/你的用户名/refbackend.git
+git push -u origin main
+```
+
+---
+
 ## 一、阿里云轻量服务器部署
 
 ### 1. 前置条件
