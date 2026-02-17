@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.env
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# REFPROP (不提交 DLL/FLUIDS，由服务器安装)
+REFPROP/
+*.dll
+*.so
+*.dylib
+
+# Logs & temp
+*.log
+*.tmp
+.DS_Store
