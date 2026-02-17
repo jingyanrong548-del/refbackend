@@ -19,6 +19,9 @@ build/
 *.swp
 *.swo
 
+# 嵌入式仓库（避免误添加为子模块）
+refbackend/
+
 # REFPROP (不提交 DLL/FLUIDS，由服务器安装)
 REFPROP/
 *.dll
