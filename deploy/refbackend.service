@@ -6,9 +6,8 @@ After=network.target
 Type=simple
 # 不指定 User/Group，以 root 运行，避免 www-data 不存在导致 status=217/USER
 WorkingDirectory=/www/refprop/refbackend
-Environment="RPPREFIX=/www/refprop/Refprop10.0"
 Environment="PATH=/www/refprop/refbackend/venv/bin:/usr/local/bin:/usr/bin:/bin"
-Environment="WINE_REFPROP_URL=http://127.0.0.1:8002"
+EnvironmentFile=/www/refprop/refbackend/deploy/refbackend.env
 ExecStart=/www/refprop/refbackend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8003
 Restart=always
 RestartSec=5

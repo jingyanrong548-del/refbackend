@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from config import RPPREFIX, WINE_REFPROP_URL
+from config import WINE_REFPROP_URL
 from refprop_service import calculate_properties
 
 
@@ -44,13 +44,13 @@ class CalculateResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期：启动时检查 REFPROP 路径"""
-    import os
-    if not RPPREFIX or not os.path.isdir(RPPREFIX):
-        import logging
+    """应用生命周期：启动时记录配置"""
+    import logging
+    if WINE_REFPROP_URL:
+        logging.info(f"使用 Wine 后端: {WINE_REFPROP_URL}")
+    else:
         logging.warning(
-            f"RPPREFIX 未配置或路径无效: {RPPREFIX}。"
-            "请设置环境变量 RPPREFIX 指向 REFPROP 安装目录。"
+            "WINE_REFPROP_URL 未设置。请设置环境变量，或将 REFPROP 路径配置到 RPPREFIX。"
         )
     yield
 
@@ -78,7 +78,6 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
             input_type=req.input_type,
             value1=req.value1,
             value2=req.value2,
-            rpprefix=RPPREFIX,
             wine_refprop_url=WINE_REFPROP_URL or None,
         )
         return CalculateResponse(**result)

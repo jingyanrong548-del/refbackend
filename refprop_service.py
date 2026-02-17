@@ -113,7 +113,8 @@ def calculate_properties(
     if not rpprefix or not os.path.isdir(rpprefix):
         raise RuntimeError(
             f"REFPROP 路径未配置或无效: {rpprefix}. "
-            "请设置环境变量 RPPREFIX 或 WINE_REFPROP_URL（方案 B）"
+            "请设置 WINE_REFPROP_URL（方案 B，优先）或 RPPREFIX。"
+            "若使用 Wine：确保 8002 端口后端已启动。"
         )
     
     from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary
