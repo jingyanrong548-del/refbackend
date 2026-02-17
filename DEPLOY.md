@@ -28,24 +28,38 @@ git push -u origin main
 | `SSH_PRIVATE_KEY` | SSH 私钥完整内容（含 `-----BEGIN...` 和 `-----END...`）。对应公钥需已添加到服务器 `~/.ssh/authorized_keys` | 粘贴私钥 |
 | `SSH_PORT` | SSH 端口（可选，默认 22） | `22` |
 
-### 2. 服务器端准备
+### 2. 方案 B：Wine REFPROP 后端（做法一）
+
+Wine 后端占 **8002**，refbackend 占 **8003**，域名指向 refbackend：
+
+```bash
+export WINE_REFPROP_URL="http://127.0.0.1:8002"
+```
+
+在 systemd 的 `refbackend.service` 中可加：`Environment="WINE_REFPROP_URL=http://127.0.0.1:8002"`。  
+宝塔中 ref.jingyanrong.com 反向代理目标为：`http://127.0.0.1:8003`。
+
+### 3. 服务器端准备
 
 - 已在服务器上完成首次部署（见下文「阿里云轻量服务器部署」）
 - SSH 用户具备 `sudo systemctl restart refbackend` 权限（建议配置免密 sudo）
-- 部署路径为 `/opt/refbackend`（不同路径需修改 `.github/workflows/deploy.yml` 中的 `cd /opt/refbackend`）
+- 部署路径为 `/www/refprop/refbackend`。部署时会自动安装/更新 `refbackend.service`，无需手动配置
 
-### 3. 免密 sudo 配置（可选）
+### 4. 免密 sudo 配置（可选）
 
 若 SSH 用户执行 `sudo systemctl restart` 时被要求输入密码，可配置免密：
 
 ```bash
 sudo visudo
 # 在文件末尾添加（将 root 换成你的 SSH_USER）：
+root ALL=(ALL) NOPASSWD: /bin/cp /www/refprop/refbackend/deploy/refbackend.service /etc/systemd/system/
+root ALL=(ALL) NOPASSWD: /bin/systemctl daemon-reload
+root ALL=(ALL) NOPASSWD: /bin/systemctl enable refbackend
 root ALL=(ALL) NOPASSWD: /bin/systemctl restart refbackend
 root ALL=(ALL) NOPASSWD: /bin/systemctl status refbackend
 ```
 
-### 4. 查看部署结果
+### 5. 查看部署结果
 
 推送后到 **Actions** 标签页查看运行日志。
 
@@ -63,7 +77,8 @@ root ALL=(ALL) NOPASSWD: /bin/systemctl status refbackend
 
 ```bash
 # SSH 登录服务器后
-cd /opt  # 或你选定的目录
+sudo mkdir -p /www/refprop
+cd /www/refprop
 sudo git clone https://github.com/jingyanrong548-del/refbackend.git
 cd refbackend
 
@@ -102,7 +117,7 @@ server {
     listen 80;
     server_name ref.jingyanrong.com;
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8003;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -123,7 +138,7 @@ sudo certbot --nginx -d ref.jingyanrong.com
 - **手动**：
 
 ```bash
-cd /opt/refbackend
+cd /www/refprop/refbackend
 git pull origin main
 source venv/bin/activate
 pip install -r requirements.txt

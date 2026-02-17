@@ -6,11 +6,11 @@ After=network.target
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/refbackend
-Environment="RPPREFIX=/path/to/REFPROP"
-Environment="PATH=/opt/refbackend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+WorkingDirectory=/www/refprop/refbackend
+Environment="RPPREFIX=/www/refprop/Refprop10.0"
+Environment="PATH=/www/refprop/refbackend/venv/bin:/usr/local/bin:/usr/bin:/bin"
 Environment="WINE_REFPROP_URL=http://127.0.0.1:8002"
-ExecStart=/opt/refbackend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8003
+ExecStart=/www/refprop/refbackend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8003
 Restart=always
 RestartSec=5
 

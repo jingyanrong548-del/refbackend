@@ -26,6 +26,10 @@ jobs:
             echo ">>> 更新依赖..."
             source venv/bin/activate
             pip install -r requirements.txt -q
+            echo ">>> 安装/更新 systemd 服务..."
+            sudo cp deploy/refbackend.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable refbackend 2>/dev/null || true
             echo ">>> 重启服务..."
             sudo systemctl restart refbackend
             echo ">>> 部署完成"
