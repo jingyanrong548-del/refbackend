@@ -21,6 +21,9 @@
 | 定压比热 CP | J/(mol·K) |
 | 定容比热 CV | J/(mol·K) |
 | 声速 W | m/s |
+| 动力粘度 VIS | µPa·s |
+| 导热系数 TCX | W/(m·K) |
+| 普朗特数 PRANDTL | - |
 
 ---
 
@@ -98,6 +101,9 @@ REFPROP 文档：*"The order of the properties being sent to the routine in the 
 | CP | number \| null | 定压比热 [J/(mol·K)] |
 | CV | number \| null | 定容比热 [J/(mol·K)] |
 | W | number \| null | 声速 [m/s] |
+| VIS | number \| null | 动力粘度 [µPa·s] |
+| TCX | number \| null | 导热系数 [W/(m·K)] |
+| PRANDTL | number \| null | 普朗特数 [-] |
 
 两相区时，CP、CV、W 可能为 `null`（REFPROP 在两相区不定义这些量）。
 
@@ -127,7 +133,10 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
   "Q": null,
   "CP": 75.4,
   "CV": 67.2,
-  "W": 450.3
+  "W": 450.3,
+  "VIS": 12345.6,
+  "TCX": 0.089,
+  "PRANDTL": 2.34
 }
 ```
 
@@ -249,7 +258,7 @@ fetch('https://ref.jingyanrong.com/calculate', {
 })
 ```
 
-**响应字段：** `T`, `P`, `D`, `H`, `S`, `Q`, `CP`, `CV`, `W`（单位：K, kPa, mol/dm³, J/mol, J/(mol·K), -, J/(mol·K), J/(mol·K), m/s）。
+**响应字段：** `T`, `P`, `D`, `H`, `S`, `Q`, `CP`, `CV`, `W`, `VIS`, `TCX`, `PRANDTL`（单位：K, kPa, mol/dm³, J/mol, J/(mol·K), -, J/(mol·K), J/(mol·K), m/s, µPa·s, W/(m·K), -）。
 
 ### 2. 饱和包络线 `/dome`（POST）
 

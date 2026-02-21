@@ -4,7 +4,8 @@ REFPROP 核心计算引擎
 
 单位制：API 接口遵循 NIST REFPROP 官方 DEFAULT 单位制（iUnits=0）：
   - T [K], P [kPa], D [mol/dm³], H [J/mol], S [J/(mol·K)], Q [-], CP/CV [J/(mol·K)], W [m/s]
-内部使用 MOLAR BASE SI（Pa, mol/m³）调用 REFPROP，在边界做单位转换。
+  - VIS [µPa·s], TCX [W/(m·K)], PRANDTL [-]
+内部使用 MOLAR BASE SI 调用 REFPROP，在边界做单位转换。
 """
 import os
 from typing import List, Optional, Tuple
@@ -17,9 +18,10 @@ REFPROP_2PHASE_CP_W = -9999980
 REFPROP_2PHASE_CV = -9999990
 
 # REFPROP DEFAULT 与 MOLAR BASE SI 单位换算
-# DEFAULT: P [kPa], D [mol/dm³]  |  MOLAR BASE SI: P [Pa], D [mol/m³]
+# DEFAULT: P [kPa], D [mol/dm³], VIS [µPa·s]  |  MOLAR BASE SI: P [Pa], D [mol/m³], VIS [Pa·s]
 KPA_TO_PA = 1000.0
 MOL_DM3_TO_MOL_M3 = 1000.0  # 1 mol/dm³ = 1000 mol/m³
+PA_S_TO_UPAS = 1e6  # 1 Pa·s = 1e6 µPa·s
 
 
 def parse_fluid_string(fluid_string: str) -> Tuple[str, List[float]]:
@@ -127,7 +129,7 @@ def calculate_properties(
     MOLAR_BASE_SI = RP.GETENUMdll(0, "MOLAR BASE SI").iEnum
 
     refprop_fluid, z = parse_fluid_string(fluid_string)
-    h_out = "T;P;D;H;S;Qmole;CP;CV;W"
+    h_out = "T;P;D;H;S;Qmole;CP;CV;W;VIS;TCX;PRANDTL"
     h_in = input_type.upper().strip()
 
     if len(h_in) != 2:
@@ -167,10 +169,11 @@ def calculate_properties(
             f"REFPROP 计算错误 (ierr={r.ierr}): {r.herr.strip()}"
         )
 
-    outputs = list(r.Output[:9])
-    # 输出单位转换：P Pa->kPa, D mol/m³->mol/dm³（与 REFPROP DEFAULT 一致）
+    outputs = list(r.Output[:12])
+    # 输出单位转换：P Pa->kPa, D mol/m³->mol/dm³, VIS Pa·s->µPa·s（与 REFPROP DEFAULT 一致）
     p_val = _clean_value(outputs[1])
     d_val = _clean_value(outputs[2])
+    vis_val = _clean_value(outputs[9])
     return {
         "T": _clean_value(outputs[0]),
         "P": (p_val / KPA_TO_PA) if p_val is not None else None,
@@ -181,4 +184,7 @@ def calculate_properties(
         "CP": _clean_value(outputs[6]),
         "CV": _clean_value(outputs[7]),
         "W": _clean_value(outputs[8]),
+        "VIS": (vis_val * PA_S_TO_UPAS) if vis_val is not None else None,
+        "TCX": _clean_value(outputs[10]),
+        "PRANDTL": _clean_value(outputs[11]),
     }

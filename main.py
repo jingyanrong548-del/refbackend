@@ -56,6 +56,9 @@ class CalculateResponse(BaseModel):
     CP: Optional[float] = Field(None, description="定压比热 [J/(mol·K)]")
     CV: Optional[float] = Field(None, description="定容比热 [J/(mol·K)]")
     W: Optional[float] = Field(None, description="声速 [m/s]")
+    VIS: Optional[float] = Field(None, description="动力粘度 [µPa·s]")
+    TCX: Optional[float] = Field(None, description="导热系数 [W/(m·K)]")
+    PRANDTL: Optional[float] = Field(None, description="普朗特数 [-]")
 
 
 @asynccontextmanager
