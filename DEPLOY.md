@@ -151,6 +151,78 @@ sudo systemctl restart refbackend
 
 ---
 
+## 一.5 替换 REFPROP 10 源码与数据（解决 FORTRAN 导致后端不可用）
+
+若后端因旧版 FORTRAN 源码 / `librefprop.so` 无法运行（如 multiple definition 编译错误或运行时崩溃），使用新的 REFPROP 10 源码按以下步骤替换。
+
+### 步骤 1：本地上传新的 FLUIDS、MIXTURES、FORTRAN
+
+在**本地 Mac** 执行，将 AddIns 中新源码上传到服务器（会先删除服务器上的旧文件）：
+
+```bash
+cd /path/to/refbackend
+./deploy/upload-refprop-data.sh
+```
+
+脚本会删除服务器 `/www/refprop/Refprop10.0/` 下的旧 `FLUIDS`、`MIXTURES`、`FORTRAN`，并上传本地 `~/下载/NIST Refprop10.0/.../AddIns/` 中的新文件。首次使用前请修改脚本中的 `LOCAL_ADDINS`、`SSH_HOST`、`SSH_USER`。
+
+### 步骤 2：SSH 登录服务器并准备 REFPROP-cmake
+
+```bash
+ssh root@你的服务器
+
+# 若尚未克隆 REFPROP-cmake，则执行：
+cd /www/refprop
+sudo git clone https://github.com/usnistgov/REFPROP-cmake.git
+```
+
+### 步骤 3：应用 REFPROP 10 编译修复（排除 multiple definition）
+
+REFPROP 10 源码与 REFPROP-cmake 存在兼容问题，需排除部分冗余 .FOR 文件。**注意**：`UTILITY` 和 `FLSH_SUB` 必须保留（提供 `xdiv2_`、`dsfl1_` 等运行时必需符号），排除列表为：`CORE_DE`、`CORE_MLT`、`CORE_STN`、`CORE_PH0`、`CORE_CPP`、`CORE_BWR`、`CORE_ECS`、`IDEALGAS`、`MIX_AGA8`、`REALGAS`、`TRNS_ECS`。
+
+```bash
+cd /www/refprop/refbackend
+sudo bash /www/refprop/refbackend/deploy/refprop-build-fix.sh
+```
+
+或手动应用补丁：
+
+```bash
+cd /www/refprop/REFPROP-cmake
+sudo patch -p1 < /www/refprop/refbackend/deploy/REFPROP-cmake-REFPROP10.patch
+```
+
+### 步骤 4：编译生成新的 librefprop.so
+
+```bash
+cd /www/refprop/REFPROP-cmake/build
+rm -rf *
+cmake .. -DREFPROP_FORTRAN_PATH=/www/refprop/Refprop10.0/FORTRAN -DCMAKE_BUILD_TYPE=Release
+mkdir -p FORTRAN_temp
+cp /www/refprop/Refprop10.0/FORTRAN/*.INC FORTRAN_temp/
+cmake --build .
+```
+
+### 步骤 5：将 librefprop.so 放入 REFPROP 目录
+
+```bash
+# 使用 /bin/cp -f 强制覆盖，避免 cp 别名（如 -i）导致复制失败
+/bin/cp -f /www/refprop/REFPROP-cmake/build/librefprop.so /www/refprop/Refprop10.0/
+```
+
+### 步骤 6：重启 refbackend 服务
+
+```bash
+sudo systemctl restart refbackend
+sudo systemctl status refbackend
+```
+
+### 步骤 7：验证
+
+访问 `https://ref.jingyanrong.com/` 或调用 `/calculate` 接口，确认后端正常返回。
+
+---
+
 ## 二、接口说明
 
 部署完成后，API 统一为：

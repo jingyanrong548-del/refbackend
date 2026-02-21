@@ -24,8 +24,8 @@ with open(path) as f:
     content = f.read()
 
 patch = '''
-# REFPROP 10: 排除导致 multiple definition 的冗余源文件
-set(REFPROP_10_EXCLUDE CORE_DE CORE_MLT CORE_STN CORE_PH0 CORE_CPP CORE_BWR CORE_ECS FLSH_SUB IDEALGAS MIX_AGA8 REALGAS TRNS_ECS UTILITY)
+# REFPROP 10: 排除导致 multiple definition 的冗余源文件（不含 UTILITY、FLSH_SUB，二者提供 xdiv2_、dsfl1_ 等运行时必需符号）
+set(REFPROP_10_EXCLUDE CORE_DE CORE_MLT CORE_STN CORE_PH0 CORE_CPP CORE_BWR CORE_ECS IDEALGAS MIX_AGA8 REALGAS TRNS_ECS)
 foreach(excl ${REFPROP_10_EXCLUDE})
   foreach(src ${APP_SOURCES})
     if("${src}" MATCHES "/${excl}\\\\.FOR$")
@@ -55,5 +55,7 @@ echo ">>> 完成。请重新执行完整构建："
 echo "    cd /www/refprop/REFPROP-cmake/build"
 echo "    rm -rf *"
 echo "    cmake .. -DREFPROP_FORTRAN_PATH=/www/refprop/Refprop10.0/FORTRAN -DCMAKE_BUILD_TYPE=Release"
+echo "    mkdir -p FORTRAN_temp"
 echo "    cp /www/refprop/Refprop10.0/FORTRAN/*.INC FORTRAN_temp/"
 echo "    cmake --build ."
+echo "    /bin/cp -f /www/refprop/REFPROP-cmake/build/librefprop.so /www/refprop/Refprop10.0/"
