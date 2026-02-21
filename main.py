@@ -20,7 +20,7 @@ class CalculateRequest(BaseModel):
     """POST /calculate 请求体"""
     fluid_string: str = Field(
         ...,
-        description="工质字符串。纯工质如 'R32','R1234ZE'；混合工质如 'R32&R125|0.5&0.5'（摩尔分数）"
+        description="工质字符串。纯工质如 'R32','R1234ZE'；混合物别名如 'R515B'；混合工质如 'R32&R125|0.5&0.5'（摩尔分数）"
     )
     input_type: str = Field(
         ...,
@@ -34,7 +34,7 @@ class DomeRequest(BaseModel):
     """POST /dome 请求体"""
     fluid_string: str = Field(
         ...,
-        description="工质字符串。纯工质如 'R32'；混合工质如 'R32&R125|0.5&0.5'"
+        description="工质字符串。纯工质如 'R32'；混合物别名如 'R515B'；混合工质如 'R32&R125|0.5&0.5'"
     )
 
 

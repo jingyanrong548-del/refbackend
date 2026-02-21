@@ -23,20 +23,31 @@ KPA_TO_PA = 1000.0
 MOL_DM3_TO_MOL_M3 = 1000.0  # 1 mol/dm³ = 1000 mol/m³
 PA_S_TO_UPAS = 1e6  # 1 Pa·s = 1e6 µPa·s
 
+# 混合物别名：当服务器无预定义 .MIX 文件时，用组分形式等效替代
+# 摩尔分数由质量分数换算：R515B = 91.1% R1234ze(E) + 8.9% R227ea (wt)
+BLEND_ALIASES: dict[str, str] = {
+    "R515B": "R1234ZE&R227EA|0.9384&0.0616",
+}
+
 
 def parse_fluid_string(fluid_string: str) -> Tuple[str, List[float]]:
     """
     解析工质字符串，支持纯工质与混合工质
     
     1. 纯工质: "R32", "R1234ZE", "Water"
-    2. 混合工质 REFPROP 格式: "R32*R125"（无比例时默认等摩尔）
-    3. 混合工质自定义格式: "R32&R125|0.5&0.5"（组分用 & 分隔，比例用 | 分隔）
+    2. 混合物别名: "R515B" 等（无 .MIX 时自动转为组分形式）
+    3. 混合工质 REFPROP 格式: "R32*R125"（无比例时默认等摩尔）
+    4. 混合工质自定义格式: "R32&R125|0.5&0.5"（组分用 & 分隔，比例用 | 分隔）
        - 摩尔分数示例: "R32&R125|0.5&0.5"
     
     Returns:
         (fluid_refprop_str, z_array): REFPROP 可用的流体字符串和组分摩尔分数数组（20 维）
     """
     fluid_string = fluid_string.strip()
+    # 混合物别名：R515B 等无 .MIX 时用组分形式等效
+    alias = BLEND_ALIASES.get(fluid_string.upper())
+    if alias is not None:
+        fluid_string = alias
     
     # 格式: "Fluid1&Fluid2|frac1&frac2"
     if "|" in fluid_string:

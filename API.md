@@ -89,6 +89,9 @@ REFPROP 文档：*"The order of the properties being sent to the routine in the 
 ### fluid_string 格式（REFPROP 兼容）
 
 - **纯工质**：`"R32"`, `"R1234ZE"`, `"Water"`, `"CO2"` 等
+- **混合物别名（本 API 扩展）**：`"R515B"` 等
+  - 当服务器无预定义 .MIX 文件时，自动转为组分形式计算
+  - 当前支持：`R515B` → R1234ZE/R227EA (91.1%/8.9% 质量，约 93.8%/6.2% 摩尔)
 - **混合工质（本 API 扩展）**：`"R32&R125|0.5&0.5"`
   - `&` 分隔组分名
   - `|` 分隔组分与摩尔分数
@@ -97,6 +100,7 @@ REFPROP 文档：*"The order of the properties being sent to the routine in the 
 示例：
 
 - `"R32"` — 纯 R32
+- `"R515B"` — R515B 混合物（自动等效为 R1234ZE/R227EA 组分）
 - `"R32&R125|0.5&0.5"` — R32/R125 等摩尔混合物
 - `"R32&R125|0.7&0.3"` — R32 70%、R125 30%（摩尔）
 
