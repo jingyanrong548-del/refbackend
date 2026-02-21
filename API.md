@@ -118,6 +118,57 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 ---
 
+## POST /dome
+
+生成饱和包络线 (P-h Dome) 数据，供前端绘制 P-h 压焓图。**需 X-API-Key 鉴权。**
+
+### 请求体 (JSON)
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `fluid_string` | string | 是 | 工质字符串，同 `/calculate` |
+
+### 响应体 (JSON)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `liquid` | array | 饱和液线 (q=0) 的点数组，每项 `{P, H}` |
+| `vapor` | array | 饱和气线 (q=1) 的点数组，每项 `{P, H}` |
+| `critical` | object | 临界点 `{T, P, H}` |
+
+单位：P [kPa]，H [J/mol]，T [K]。
+
+### 请求示例
+
+```bash
+curl -X POST "https://ref.jingyanrong.com/dome" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_SECRET_API_KEY" \
+  -d '{"fluid_string": "R32"}'
+```
+
+### 响应示例
+
+```json
+{
+  "liquid": [
+    {"P": 82.34, "H": 12345.6},
+    {"P": 101.325, "H": 15678.9}
+  ],
+  "vapor": [
+    {"P": 82.34, "H": 45678.9},
+    {"P": 101.325, "H": 48901.2}
+  ],
+  "critical": {
+    "T": 351.25,
+    "P": 5782.0,
+    "H": 32156.7
+  }
+}
+```
+
+---
+
 ## GET /
 
 健康检查接口。

@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from config import ALLOWED_ORIGINS
 from dependencies import verify_api_key
+from dome_engine import compute_saturation_dome
 from refprop_engine import calculate_properties
 
 
@@ -28,6 +29,21 @@ class CalculateRequest(BaseModel):
     )
     value1: float = Field(..., description="第一个输入参数的值")
     value2: float = Field(..., description="第二个输入参数的值")
+
+
+class DomeRequest(BaseModel):
+    """POST /dome 请求体"""
+    fluid_string: str = Field(
+        ...,
+        description="工质字符串。纯工质如 'R32'；混合工质如 'R32&R125|0.5&0.5'"
+    )
+
+
+class DomeResponse(BaseModel):
+    """POST /dome 响应体"""
+    liquid: list = Field(..., description="饱和液线 (q=0) 的 [P, H] 点列表")
+    vapor: list = Field(..., description="饱和气线 (q=1) 的 [P, H] 点列表")
+    critical: dict = Field(..., description="临界点 {T, P, H}")
 
 
 class CalculateResponse(BaseModel):
@@ -87,6 +103,26 @@ def calculate(
             value2=req.value2,
         )
         return CalculateResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/dome", response_model=DomeResponse)
+def dome(
+    req: DomeRequest,
+    _: str = Depends(verify_api_key),
+) -> DomeResponse:
+    """
+    生成饱和包络线 (P-h Dome) 数据
+    
+    返回饱和液线 (q=0) 和饱和气线 (q=1) 的 (P, H) 坐标点数组，
+    供前端绘制 P-h 压焓图。单位：P [kPa]，H [J/mol]。
+    """
+    try:
+        result = compute_saturation_dome(fluid_string=req.fluid_string)
+        return DomeResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except RuntimeError as e:
