@@ -5,12 +5,11 @@
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from config import ALLOWED_ORIGINS
-from dependencies import verify_api_key
 from dome_engine import compute_saturation_dome
 from refprop_engine import calculate_properties
 
@@ -79,17 +78,14 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "X-API-Key"],
+    allow_headers=["Content-Type"],
 )
 
 
 @app.post("/calculate", response_model=CalculateResponse)
-def calculate(
-    req: CalculateRequest,
-    _: str = Depends(verify_api_key),  # 强制 API Key 鉴权
-) -> CalculateResponse:
+def calculate(req: CalculateRequest) -> CalculateResponse:
     """
-    热力学性质计算（需 X-API-Key 鉴权）
+    热力学性质计算
     
     - **fluid_string**: 工质（纯或混合）。混合格式: `R32&R125|0.5&0.5`
     - **input_type**: PT, PQ, PH, TD 等两字符组合
@@ -110,10 +106,7 @@ def calculate(
 
 
 @app.post("/dome", response_model=DomeResponse)
-def dome(
-    req: DomeRequest,
-    _: str = Depends(verify_api_key),
-) -> DomeResponse:
+def dome(req: DomeRequest) -> DomeResponse:
     """
     生成饱和包络线 (P-h Dome) 数据
     

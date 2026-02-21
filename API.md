@@ -11,14 +11,13 @@
 
 ## POST /calculate
 
-计算给定工质和状态点的热力学性质。**需在请求头中携带 `X-API-Key`**，与 `.env` 中的 `SECRET_API_KEY` 一致，否则返回 401。
+计算给定工质和状态点的热力学性质。
 
 ### 请求头
 
 | 头名 | 必填 | 说明 |
 |------|------|------|
 | `Content-Type` | 是 | `application/json` |
-| `X-API-Key` | 是 | API 密钥，与服务端 `SECRET_API_KEY` 一致 |
 
 ### 请求体 (JSON)
 
@@ -75,7 +74,6 @@
 ```bash
 curl -X POST "https://ref.jingyanrong.com/calculate" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_SECRET_API_KEY" \
   -d '{
     "fluid_string": "R32",
     "input_type": "PT",
@@ -104,7 +102,6 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 | 状态码 | 说明 |
 |--------|------|
-| 401 | 未提供或无效的 X-API-Key |
 | 400 | 参数错误（如 fluid_string 或 input_type 格式不正确） |
 | 500 | REFPROP 计算错误或服务端配置问题 |
 
@@ -120,7 +117,7 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 ## POST /dome
 
-生成饱和包络线 (P-h Dome) 数据，供前端绘制 P-h 压焓图。**需 X-API-Key 鉴权。**
+生成饱和包络线 (P-h Dome) 数据，供前端绘制 P-h 压焓图。
 
 ### 请求体 (JSON)
 
@@ -143,7 +140,6 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 ```bash
 curl -X POST "https://ref.jingyanrong.com/dome" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_SECRET_API_KEY" \
   -d '{"fluid_string": "R32"}'
 ```
 
@@ -192,7 +188,6 @@ curl -X POST "https://ref.jingyanrong.com/dome" \
 |------|-----|
 | Base URL | `https://ref.jingyanrong.com` |
 | Content-Type | `application/json` |
-| 鉴权方式 | 请求头 `X-API-Key`，与后端 `SECRET_API_KEY` 一致 |
 | CORS | 已配置允许域名，本地开发可用 `http://localhost:5173` |
 
 ### 1. 物性计算 `/calculate`（POST）
@@ -203,8 +198,7 @@ curl -X POST "https://ref.jingyanrong.com/dome" \
 fetch('https://ref.jingyanrong.com/calculate', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'YOUR_SECRET_API_KEY'
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({
     fluid_string: 'R32',      // 纯工质或 "R32&R125|0.7&0.3" 混合物
@@ -236,8 +230,7 @@ fetch('https://ref.jingyanrong.com/calculate', {
 fetch('https://ref.jingyanrong.com/dome', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'YOUR_SECRET_API_KEY'
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({ fluid_string: 'R32' })
 })
@@ -247,7 +240,7 @@ fetch('https://ref.jingyanrong.com/dome', {
 
 ### 3. 健康检查 `/`（GET）
 
-无鉴权，用于检查服务是否可用：
+用于检查服务是否可用：
 
 ```javascript
 fetch('https://ref.jingyanrong.com/')
@@ -257,16 +250,15 @@ fetch('https://ref.jingyanrong.com/')
 
 | 状态码 | 含义 |
 |--------|------|
-| 401 | 缺少或错误的 X-API-Key |
 | 400 | 参数格式错误 |
 | 500 | REFPROP 计算错误，响应体 `{ detail: "错误信息" }` |
 
-建议前端在 401 时提示配置 API Key，500 时展示 `detail` 中的错误信息。
+建议前端在 500 时展示 `detail` 中的错误信息。
 
 ---
 
 ## 部署说明
 
 1. 安装 REFPROP 10.0，确保存在 `librefprop.so` 及 `FLUIDS` 文件夹。
-2. 复制 `.env.example` 为 `.env`，配置 `RPPREFIX`、`SECRET_API_KEY`、`ALLOWED_ORIGINS`。
+2. 复制 `.env.example` 为 `.env`，配置 `RPPREFIX`、`ALLOWED_ORIGINS`。
 3. 生产启动：`./start.sh`（gunicorn + UvicornWorker，4 进程，绑定 0.0.0.0:8003）。
