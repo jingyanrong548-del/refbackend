@@ -28,24 +28,13 @@ git push -u origin main
 | `SSH_PRIVATE_KEY` | SSH 私钥完整内容（含 `-----BEGIN...` 和 `-----END...`）。对应公钥需已添加到服务器 `~/.ssh/authorized_keys` | 粘贴私钥 |
 | `SSH_PORT` | SSH 端口（可选，默认 22） | `22` |
 
-### 2. 方案 B：Wine REFPROP 后端（做法一）
-
-Wine 后端占 **8002**，refbackend 占 **8003**，域名指向 refbackend：
-
-```bash
-export WINE_REFPROP_URL="http://127.0.0.1:8002"
-```
-
-在 systemd 的 `refbackend.service` 中可加：`Environment="WINE_REFPROP_URL=http://127.0.0.1:8002"`。  
-宝塔中 ref.jingyanrong.com 反向代理目标为：`http://127.0.0.1:8003`。
-
-### 3. 服务器端准备
+### 2. 服务器端准备
 
 - 已在服务器上完成首次部署（见下文「阿里云轻量服务器部署」）
 - SSH 用户具备 `sudo systemctl restart refbackend` 权限（建议配置免密 sudo）
 - 部署路径为 `/www/refprop/refbackend`。部署时会自动安装/更新 `refbackend.service`，无需手动配置
 
-### 4. 免密 sudo 配置（可选）
+### 3. 免密 sudo 配置（可选）
 
 若 SSH 用户执行 `sudo systemctl restart` 时被要求输入密码，可配置免密：
 
@@ -59,7 +48,7 @@ root ALL=(ALL) NOPASSWD: /bin/systemctl restart refbackend
 root ALL=(ALL) NOPASSWD: /bin/systemctl status refbackend
 ```
 
-### 5. 查看部署结果
+### 4. 查看部署结果
 
 推送后到 **Actions** 标签页查看运行日志。
 
@@ -80,18 +69,7 @@ ctREFPROP 在 Linux 上需要 `librefprop.so`，不能使用 Windows 的 REFPRP6
 1. **获取 REFPROP 数据**：从 Windows 安装目录复制 `FLUIDS`、`MIXTURES` 到 `/www/refprop/Refprop10.0/`
 2. **编译 librefprop.so**：使用 NIST 官方 [REFPROP-cmake](https://github.com/usnistgov/REFPROP-cmake) 从 Fortran 源码编译
 3. **放置**：将生成的 `librefprop.so` 放入 `/www/refprop/Refprop10.0/`，与 FLUIDS 同目录
-4. **环境**：`deploy/refbackend.env` 中 `RPPREFIX=/www/refprop/Refprop10.0`，`WINE_REFPROP_URL=` 留空
-
-若尚未编译好 librefprop.so，可运行 `wine_refprop_backend` 作为 8002 后端（同样需要 librefprop.so，与直接使用 ctREFPROP 条件相同）：
-
-```bash
-# 编辑 deploy/refbackend.env，设置 WINE_REFPROP_URL=http://127.0.0.1:8002
-# 安装并启动 8002 后端
-sudo cp deploy/refprop8002.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable refprop8002
-sudo systemctl start refprop8002
-```
+4. **环境**：`deploy/refbackend.env` 中设置 `RPPREFIX=/www/refprop/Refprop10.0`
 
 ### 2. 首次部署
 

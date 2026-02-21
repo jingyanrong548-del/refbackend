@@ -1,16 +1,17 @@
 """
-基于 REFPROP 10.0 的热力学计算 API
-用于高温热泵、新工质开发等高精度工业应用
+基于 REFPROP 10.0 的热力学计算 API（进阶版）
+用于高温热泵、新工质开发等高精度工业应用，支持多 App 接入
 """
 from contextlib import asynccontextmanager
-
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from config import RPPREFIX, WINE_REFPROP_URL
-from refprop_service import calculate_properties
+from config import ALLOWED_ORIGINS
+from dependencies import verify_api_key
+from refprop_engine import calculate_properties
 
 
 # --- 请求/响应模型 ---
@@ -45,13 +46,6 @@ class CalculateResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期：启动时记录配置"""
-    import logging
-    if WINE_REFPROP_URL:
-        logging.info(f"使用 Wine 后端: {WINE_REFPROP_URL}")
-    else:
-        logging.warning(
-            "WINE_REFPROP_URL 未设置。请设置环境变量，或将 REFPROP 路径配置到 RPPREFIX。"
-        )
     yield
 
 
@@ -62,11 +56,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# ============== 多域 CORS 支持 ==============
+# 从 .env 的 ALLOWED_ORIGINS 读取，支持 reffrontend、个人站点、本地开发等
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key"],
+)
+
 
 @app.post("/calculate", response_model=CalculateResponse)
-def calculate(req: CalculateRequest) -> CalculateResponse:
+def calculate(
+    req: CalculateRequest,
+    _: str = Depends(verify_api_key),  # 强制 API Key 鉴权
+) -> CalculateResponse:
     """
-    热力学性质计算
+    热力学性质计算（需 X-API-Key 鉴权）
     
     - **fluid_string**: 工质（纯或混合）。混合格式: `R32&R125|0.5&0.5`
     - **input_type**: PT, PQ, PH, TD 等两字符组合
@@ -78,8 +85,6 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
             input_type=req.input_type,
             value1=req.value1,
             value2=req.value2,
-            rpprefix=RPPREFIX,
-            wine_refprop_url=WINE_REFPROP_URL or None,
         )
         return CalculateResponse(**result)
     except ValueError as e:
@@ -90,7 +95,7 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
 
 @app.get("/")
 def root():
-    """健康检查"""
+    """健康检查（无需鉴权）"""
     return {"status": "ok", "api": "REFPROP 热力学计算 API"}
 
 

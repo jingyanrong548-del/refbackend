@@ -84,46 +84,18 @@ def calculate_properties(
     value1: float,
     value2: float,
     rpprefix: Optional[str] = None,
-    wine_refprop_url: Optional[str] = None,
 ) -> dict:
     """
-    计算热力学性质。优先使用 Wine REFPROP 后端（方案 B），否则使用 ctREFPROP。
-    
-    Args:
-        fluid_string: 工质字符串 (如 "R32", "R32&R125|0.5&0.5")
-        input_type: 输入类型 ("PT", "PQ", "PH", "TD" 等；Wine 后端仅支持 PT)
-        value1: 第一个输入参数
-        value2: 第二个输入参数
-        rpprefix: REFPROP 安装路径（ctREFPROP 用）
-        wine_refprop_url: Wine 后端 URL，设置则转发请求到该后端
-    
-    Returns:
-        包含 T, P, D, H, S, Q, CP, CV, W 的字典
+    计算热力学性质（ctREFPROP 直连）。
+    建议使用 refprop_engine.calculate_properties。
     """
-    from config import WINE_REFPROP_URL
-
-    url = wine_refprop_url or WINE_REFPROP_URL
-    if url:
-        try:
-            from wine_refprop_client import calculate_via_wine
-            return calculate_via_wine(url, fluid_string, input_type, value1, value2)
-        except (RuntimeError, OSError) as e:
-            # 8002 未启动或连接失败时，回退到 ctREFPROP
-            err_msg = str(e).lower()
-            if "connection" in err_msg or "refused" in err_msg or "请求失败" in err_msg:
-                pass  # 继续尝试 ctREFPROP
-            else:
-                raise
-
     if rpprefix is None:
         from config import RPPREFIX
         rpprefix = RPPREFIX
     
     if not rpprefix or not os.path.isdir(rpprefix):
         raise RuntimeError(
-            f"REFPROP 路径未配置或无效: {rpprefix}. "
-            "请设置 WINE_REFPROP_URL（方案 B，优先）或 RPPREFIX。"
-            "若使用 Wine：确保 8002 端口后端已启动。"
+            f"REFPROP 路径未配置或无效: {rpprefix}。请设置 RPPREFIX 环境变量。"
         )
     
     from ctREFPROP.ctREFPROP import REFPROPFunctionLibrary

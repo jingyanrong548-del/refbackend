@@ -11,7 +11,14 @@
 
 ## POST /calculate
 
-计算给定工质和状态点的热力学性质。
+计算给定工质和状态点的热力学性质。**需在请求头中携带 `X-API-Key`**，与 `.env` 中的 `SECRET_API_KEY` 一致，否则返回 401。
+
+### 请求头
+
+| 头名 | 必填 | 说明 |
+|------|------|------|
+| `Content-Type` | 是 | `application/json` |
+| `X-API-Key` | 是 | API 密钥，与服务端 `SECRET_API_KEY` 一致 |
 
 ### 请求体 (JSON)
 
@@ -68,6 +75,7 @@
 ```bash
 curl -X POST "https://ref.jingyanrong.com/calculate" \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_SECRET_API_KEY" \
   -d '{
     "fluid_string": "R32",
     "input_type": "PT",
@@ -96,6 +104,7 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 | 状态码 | 说明 |
 |--------|------|
+| 401 | 未提供或无效的 X-API-Key |
 | 400 | 参数错误（如 fluid_string 或 input_type 格式不正确） |
 | 500 | REFPROP 计算错误或服务端配置问题 |
 
@@ -126,6 +135,6 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 ## 部署说明
 
-1. 安装 REFPROP 10.0，确保存在 `REFPRP64.DLL`（Windows）或对应 `.so`/`.dylib`，以及 `FLUIDS` 文件夹。
-2. 设置环境变量 `RPPREFIX` 指向 REFPROP 安装根目录。
-3. 启动服务：`uvicorn main:app --host 0.0.0.0 --port 8003`
+1. 安装 REFPROP 10.0，确保存在 `librefprop.so` 及 `FLUIDS` 文件夹。
+2. 复制 `.env.example` 为 `.env`，配置 `RPPREFIX`、`SECRET_API_KEY`、`ALLOWED_ORIGINS`。
+3. 生产启动：`./start.sh`（gunicorn + UvicornWorker，4 进程，绑定 0.0.0.0:8003）。

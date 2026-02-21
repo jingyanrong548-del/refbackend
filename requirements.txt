@@ -2,6 +2,10 @@
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
+python-dotenv>=1.0.0
 
-# REFPROP Python 封装 (需已安装 REFPROP 10.0)
+# 生产级高并发：gunicorn + UvicornWorker（多进程）
+gunicorn>=21.0.0
+
+# REFPROP Python 封装（需已安装 REFPROP 10.0）
 ctREFPROP>=0.10.0
