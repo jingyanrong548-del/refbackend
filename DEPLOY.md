@@ -1,5 +1,16 @@
 # REFPROP API 部署指南
 
+## REFPROP 10 安装位置（记录）
+
+| 环境 | 路径 |
+|------|------|
+| 阿里云服务器 | `/www/refprop/Refprop10.0` |
+| 项目配置 | `config.py` 中 `_server` 及 `.env` 中 `RPPREFIX` |
+
+Linux 使用 `librefprop.so`，无需 `REFPRP64.DLL`（Windows 专用）。
+
+---
+
 ## 零、GitHub 同步（首次）
 
 1. 在 GitHub 新建仓库 `refbackend`：<https://github.com/new>

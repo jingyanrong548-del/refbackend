@@ -8,7 +8,9 @@
 
 ## 前置条件
 
-1. **REFPROP 10.0**：需已安装 NIST REFPROP 10.0，且包含：
+1. **REFPROP 10.0**：需已安装 NIST REFPROP 10.0
+   - 阿里云服务器安装位置：`/www/refprop/Refprop10.0`（详见 [DEPLOY.md](./DEPLOY.md)）
+   - 需包含：
    - `REFPRP64.DLL`（Windows）或 `librefprop.so`（Linux）/ `librefprop.dylib`（macOS）
    - `FLUIDS` 文件夹
    - `MIXTURES` 文件夹（混合工质需）

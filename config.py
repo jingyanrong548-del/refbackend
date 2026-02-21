@@ -25,6 +25,7 @@ SECRET_API_KEY: str = os.environ.get("SECRET_API_KEY", "").strip()
 
 # ============== REFPROP 路径配置 ==============
 # REFPROP 安装根目录，需含 librefprop.so 和 FLUIDS 文件夹
+# 阿里云服务器安装位置：/www/refprop/Refprop10.0
 _default = os.path.join(os.path.dirname(__file__), "REFPROP")
 _server = "/www/refprop/Refprop10.0"
 RPPREFIX: str = (

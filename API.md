@@ -1,8 +1,20 @@
 # REFPROP 热力学计算 API 接口规范
 
-本文档供前端 (reffrontend.jingyanrong.com) 对接使用。**接口调用规则完全遵循 NIST REFPROP 10.0 官方规范**，与 REFPROP REFPROPdll 行为保持一致。
+本文档供前端 (reffrontend.jingyanrong.com) 及各引用方对接使用。**接口调用规则完全遵循 NIST REFPROP 10.0 官方规范**，与 REFPROP REFPROPdll 行为保持一致。
 
 参考：[REFPROP 10.0 High-Level API](https://refprop-docs.readthedocs.io/en/latest/DLL/high_level.html)
+
+---
+
+## 变更说明（前端迁移须知）
+
+若之前已对接本 API，请按以下变更更新：
+
+| 变更项 | 说明 |
+|--------|------|
+| **新增响应字段** | `VIS`（动力粘度 µPa·s）、`TCX`（导热系数 W/(m·K)）、`PRANDTL`（普朗特数） |
+| **参数顺序** | `PT` 时：`value1` = P [kPa]，`value2` = T [K]，顺序不可颠倒 |
+| **单位修正** | 压力统一为 kPa，与 REFPROP DEFAULT 一致 |
 
 ---
 
