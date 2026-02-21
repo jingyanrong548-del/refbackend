@@ -1,6 +1,10 @@
 """
 REFPROP 核心计算引擎
 封装 ctREFPROP 调用，支持纯工质与混合工质，环境变量配置 .so 与 FLUIDS 路径
+
+单位制：API 接口遵循 NIST REFPROP 官方 DEFAULT 单位制（iUnits=0）：
+  - T [K], P [kPa], D [mol/dm³], H [J/mol], S [J/(mol·K)], Q [-], CP/CV [J/(mol·K)], W [m/s]
+内部使用 MOLAR BASE SI（Pa, mol/m³）调用 REFPROP，在边界做单位转换。
 """
 import os
 from typing import List, Optional, Tuple
@@ -11,6 +15,11 @@ from config import FLUIDS_PATH, RPPREFIX
 REFPROP_UNDEFINED = -9999970
 REFPROP_2PHASE_CP_W = -9999980
 REFPROP_2PHASE_CV = -9999990
+
+# REFPROP DEFAULT 与 MOLAR BASE SI 单位换算
+# DEFAULT: P [kPa], D [mol/dm³]  |  MOLAR BASE SI: P [Pa], D [mol/m³]
+KPA_TO_PA = 1000.0
+MOL_DM3_TO_MOL_M3 = 1000.0  # 1 mol/dm³ = 1000 mol/m³
 
 
 def parse_fluid_string(fluid_string: str) -> Tuple[str, List[float]]:
@@ -126,6 +135,19 @@ def calculate_properties(
             f"input_type 必须为两个字符，如 PT/PQ/PH。当前: {input_type}"
         )
 
+    # API 使用 DEFAULT 单位 (kPa, mol/dm³)，REFPROP 内部用 MOLAR BASE SI (Pa, mol/m³)
+    # 输入压力：kPa -> Pa
+    v1, v2 = float(value1), float(value2)
+    if h_in[0] == "P":
+        v1 *= KPA_TO_PA
+    if h_in[1] == "P":
+        v2 *= KPA_TO_PA
+    # 输入密度：mol/dm³ -> mol/m³（若输入类型含 D）
+    if h_in[0] == "D":
+        v1 *= MOL_DM3_TO_MOL_M3
+    if h_in[1] == "D":
+        v2 *= MOL_DM3_TO_MOL_M3
+
     # REFPROPdll: 输入类型、输出字符串、单位、iMass、iFlag、value1、value2、z
     r = RP.REFPROPdll(
         refprop_fluid,
@@ -134,8 +156,8 @@ def calculate_properties(
         MOLAR_BASE_SI,
         0,  # iMass: 0 摩尔基
         0,  # iFlag
-        value1,
-        value2,
+        v1,
+        v2,
         z,
     )
 
@@ -146,10 +168,13 @@ def calculate_properties(
         )
 
     outputs = list(r.Output[:9])
+    # 输出单位转换：P Pa->kPa, D mol/m³->mol/dm³（与 REFPROP DEFAULT 一致）
+    p_val = _clean_value(outputs[1])
+    d_val = _clean_value(outputs[2])
     return {
         "T": _clean_value(outputs[0]),
-        "P": _clean_value(outputs[1]),
-        "D": _clean_value(outputs[2]),
+        "P": (p_val / KPA_TO_PA) if p_val is not None else None,
+        "D": (d_val / MOL_DM3_TO_MOL_M3) if d_val is not None else None,
         "H": _clean_value(outputs[3]),
         "S": _clean_value(outputs[4]),
         "Q": _clean_value(outputs[5]),

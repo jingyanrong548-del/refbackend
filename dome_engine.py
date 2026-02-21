@@ -1,12 +1,15 @@
 """
 饱和包络线 (Saturation Dome) 计算引擎
 为 P-h 压焓图提供饱和液线 (q=0) 和饱和气线 (q=1) 的坐标点数组
+
+单位：API 遵循 NIST REFPROP DEFAULT 单位制，P [kPa]，H [J/mol]，T [K]。
+内部用 MOLAR BASE SI 调用 REFPROP，输出 P 从 Pa 转为 kPa。
 """
 import os
 from typing import List, Optional, Tuple
 
 from config import FLUIDS_PATH, RPPREFIX
-from refprop_engine import parse_fluid_string
+from refprop_engine import KPA_TO_PA, parse_fluid_string
 
 
 # 扫描参数
@@ -53,7 +56,8 @@ def _get_critical_point(
     )
     if r.ierr > 100:
         raise RuntimeError(f"获取临界点失败 (ierr={r.ierr}): {r.herr.strip()}")
-    return float(r.Output[0]), float(r.Output[1]), float(r.Output[2])
+    Tc, Pc_Pa, Hc = float(r.Output[0]), float(r.Output[1]), float(r.Output[2])
+    return Tc, Pc_Pa / KPA_TO_PA, Hc  # P: Pa -> kPa
 
 
 def _get_eos_min_temperature(RP, refprop_fluid: str, z: List[float]) -> float:
@@ -123,7 +127,8 @@ def _saturation_ph_at_t(
     )
     if r.ierr > 100:
         raise RuntimeError(f"REFPROP 饱和计算失败 T={t} q={quality} (ierr={r.ierr}): {r.herr.strip()}")
-    return float(r.Output[0]), float(r.Output[1])
+    P_Pa, H = float(r.Output[0]), float(r.Output[1])
+    return P_Pa / KPA_TO_PA, H  # P: Pa -> kPa
 
 
 def compute_saturation_dome(
