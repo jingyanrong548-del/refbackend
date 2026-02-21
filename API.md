@@ -184,6 +184,87 @@ curl -X POST "https://ref.jingyanrong.com/dome" \
 
 ---
 
+## 前端 API 调用规则
+
+### 通用规则
+
+| 项目 | 值 |
+|------|-----|
+| Base URL | `https://ref.jingyanrong.com` |
+| Content-Type | `application/json` |
+| 鉴权方式 | 请求头 `X-API-Key`，与后端 `SECRET_API_KEY` 一致 |
+| CORS | 已配置允许域名，本地开发可用 `http://localhost:5173` |
+
+### 1. 物性计算 `/calculate`（POST）
+
+**请求示例：**
+
+```javascript
+fetch('https://ref.jingyanrong.com/calculate', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_SECRET_API_KEY'
+  },
+  body: JSON.stringify({
+    fluid_string: 'R32',      // 纯工质或 "R32&R125|0.7&0.3" 混合物
+    input_type: 'PT',         // PT|PQ|PH|TD|TQ|PS
+    value1: 101.325,          // 单位见下表
+    value2: 300
+  })
+})
+```
+
+**input_type 与 value1、value2 对应关系：**
+
+| input_type | value1 | value2 |
+|------------|--------|--------|
+| PT | P [kPa] | T [K] |
+| PQ | P [kPa] | Q 干度 0~1 |
+| PH | P [kPa] | H [J/mol] |
+| TD | T [K] | D [mol/dm³] |
+| TQ | T [K] | Q 干度 |
+| PS | P [kPa] | S [J/(mol·K)] |
+
+**响应字段：** `T`, `P`, `D`, `H`, `S`, `Q`, `CP`, `CV`, `W`（单位：K, kPa, mol/dm³, J/mol, J/(mol·K), -, J/(mol·K), J/(mol·K), m/s）。两相区时 `CP`、`CV`、`W` 可能为 `null`。
+
+### 2. 饱和包络线 `/dome`（POST）
+
+**请求示例：**
+
+```javascript
+fetch('https://ref.jingyanrong.com/dome', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'YOUR_SECRET_API_KEY'
+  },
+  body: JSON.stringify({ fluid_string: 'R32' })
+})
+```
+
+**响应：** `{ liquid: [{P,H},...], vapor: [{P,H},...], critical: {T,P,H} }`，单位 P [kPa]，H [J/mol]，T [K]。
+
+### 3. 健康检查 `/`（GET）
+
+无鉴权，用于检查服务是否可用：
+
+```javascript
+fetch('https://ref.jingyanrong.com/')
+```
+
+### 错误处理
+
+| 状态码 | 含义 |
+|--------|------|
+| 401 | 缺少或错误的 X-API-Key |
+| 400 | 参数格式错误 |
+| 500 | REFPROP 计算错误，响应体 `{ detail: "错误信息" }` |
+
+建议前端在 401 时提示配置 API Key，500 时展示 `detail` 中的错误信息。
+
+---
+
 ## 部署说明
 
 1. 安装 REFPROP 10.0，确保存在 `librefprop.so` 及 `FLUIDS` 文件夹。
