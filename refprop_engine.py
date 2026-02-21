@@ -24,9 +24,9 @@ MOL_DM3_TO_MOL_M3 = 1000.0  # 1 mol/dm³ = 1000 mol/m³
 PA_S_TO_UPAS = 1e6  # 1 Pa·s = 1e6 µPa·s
 
 # 混合物别名：当服务器无预定义 .MIX 文件时，用组分形式等效替代
-# 摩尔分数由质量分数换算：R515B = 91.1% R1234ze(E) + 8.9% R227ea (wt)
+# 摩尔分数按规范：R515B = R1234ze(E) + R227ea（REFPROP 10 流体名为 R1234ZEE）
 BLEND_ALIASES: dict[str, str] = {
-    "R515B": "R1234ZE&R227EA|0.9384&0.0616",
+    "R515B": "R1234ZEE&R227EA|0.938&0.062",
 }
 
 
