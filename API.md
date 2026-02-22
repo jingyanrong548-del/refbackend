@@ -12,6 +12,7 @@
 
 | 变更项 | 说明 |
 |--------|------|
+| **新增接口** | `POST /fluid-info` 工质参考属性（安全类别、GWP、ODP、临界温度、标准沸点、CAS、三相点、分子量、k值） |
 | **新增响应字段** | `VIS`（动力粘度 µPa·s）、`TCX`（导热系数 W/(m·K)）、`PRANDTL`（普朗特数） |
 | **参数顺序** | `PT` 时：`value1` = P [kPa]，`value2` = T [K]，顺序不可颠倒 |
 | **单位修正** | 压力统一为 kPa，与 REFPROP DEFAULT 一致 |
@@ -171,6 +172,58 @@ curl -X POST "https://ref.jingyanrong.com/calculate" \
 
 ---
 
+## POST /fluid-info
+
+获取工质参考属性（制冷剂选型常用参数）。
+
+### 请求体 (JSON)
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `fluid_string` | string | 是 | 工质字符串，同 `/calculate` |
+
+### 响应体 (JSON)
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `safety_class` | string \| null | ASHRAE 34 安全类别（如 A1、A2L） |
+| `gwp` | number \| null | 全球变暖潜能值 GWP100 |
+| `odp` | number \| null | 臭氧消耗潜能 ODP |
+| `critical_temperature` | number \| null | 临界温度 [K] |
+| `normal_boiling_point` | number \| null | 标准沸点 [K]（101.325 kPa 下饱和气相温度） |
+| `cas_number` | string \| null | CAS 编号 |
+| `triple_point` | object \| null | 三相点 `{T: K, P: kPa}`，若不存在则为 null |
+| `molecular_weight` | number \| null | 分子量 [g/mol] |
+| `k_value` | number \| null | 绝热指数 CP/CV @ 101.325 kPa, 298.15 K |
+
+**说明**：纯工质可返回 GWP、ODP、SAFETY、CAS；混合物时这些字段多为 null。临界温度、标准沸点、分子量、k 值对纯工质和混合物均可用。
+
+### 请求示例
+
+```bash
+curl -X POST "https://ref.jingyanrong.com/fluid-info" \
+  -H "Content-Type: application/json" \
+  -d '{"fluid_string": "R32"}'
+```
+
+### 响应示例
+
+```json
+{
+  "safety_class": "A2L",
+  "gwp": 677.0,
+  "odp": 0.0,
+  "critical_temperature": 351.255,
+  "normal_boiling_point": 221.499,
+  "cas_number": "75-10-5",
+  "triple_point": {"T": 136.34, "P": 0.000123},
+  "molecular_weight": 52.024,
+  "k_value": 1.195
+}
+```
+
+---
+
 ## POST /dome
 
 生成饱和包络线 (P-h Dome) 数据，供前端绘制 P-h 压焓图。
@@ -288,7 +341,19 @@ fetch('https://ref.jingyanrong.com/dome', {
 
 **响应：** `{ liquid: [{P,H},...], vapor: [{P,H},...], critical: {T,P,H} }`，单位 P [kPa]，H [J/mol]，T [K]。
 
-### 3. 健康检查 `/`（GET）
+### 3. 工质参考属性 `/fluid-info`（POST）
+
+```javascript
+fetch('https://ref.jingyanrong.com/fluid-info', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ fluid_string: 'R32' })
+})
+```
+
+**响应：** `safety_class`, `gwp`, `odp`, `critical_temperature`, `normal_boiling_point`, `cas_number`, `triple_point`, `molecular_weight`, `k_value`。
+
+### 4. 健康检查 `/`（GET）
 
 ```javascript
 fetch('https://ref.jingyanrong.com/')

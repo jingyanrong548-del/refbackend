@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from config import ALLOWED_ORIGINS
 from dome_engine import compute_saturation_dome
+from fluid_info import get_fluid_info
 from refprop_engine import calculate_properties
 
 
@@ -43,6 +44,27 @@ class DomeResponse(BaseModel):
     liquid: list = Field(..., description="饱和液线 (q=0) 的 [P, H] 点列表")
     vapor: list = Field(..., description="饱和气线 (q=1) 的 [P, H] 点列表")
     critical: dict = Field(..., description="临界点 {T, P, H}")
+
+
+class FluidInfoRequest(BaseModel):
+    """POST /fluid-info 请求体"""
+    fluid_string: str = Field(
+        ...,
+        description="工质字符串。纯工质如 'R32'；混合物如 'R32&R125|0.5&0.5'",
+    )
+
+
+class FluidInfoResponse(BaseModel):
+    """POST /fluid-info 响应体"""
+    safety_class: Optional[str] = Field(None, description="ASHRAE 34 安全类别")
+    gwp: Optional[float] = Field(None, description="全球变暖潜能值 (GWP100)")
+    odp: Optional[float] = Field(None, description="臭氧消耗潜能 (ODP)")
+    critical_temperature: Optional[float] = Field(None, description="临界温度 [K]")
+    normal_boiling_point: Optional[float] = Field(None, description="标准沸点 [K]")
+    cas_number: Optional[str] = Field(None, description="CAS 编号")
+    triple_point: Optional[dict] = Field(None, description="三相点 {T [K], P [kPa]}")
+    molecular_weight: Optional[float] = Field(None, description="分子量 [g/mol]")
+    k_value: Optional[float] = Field(None, description="绝热指数 CP/CV @ 101.325 kPa, 298.15 K")
 
 
 class CalculateResponse(BaseModel):
@@ -102,6 +124,23 @@ def calculate(req: CalculateRequest) -> CalculateResponse:
             value2=req.value2,
         )
         return CalculateResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/fluid-info", response_model=FluidInfoResponse)
+def fluid_info(req: FluidInfoRequest) -> FluidInfoResponse:
+    """
+    获取工质参考属性
+    
+    返回安全类别、GWP、ODP、临界温度、标准沸点、CAS编号、
+    三相点、分子量、k值（绝热指数）。混合物时 GWP/ODP/SAFETY/CAS 可能为空。
+    """
+    try:
+        result = get_fluid_info(fluid_string=req.fluid_string)
+        return FluidInfoResponse(**result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except RuntimeError as e:
