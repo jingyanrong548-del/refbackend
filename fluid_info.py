@@ -229,7 +229,9 @@ def get_fluid_info(
     cas_number = None
     if not is_mixture:
         safety_class = _get_info_string(RP, refprop_fluid, z, "SAFETY")
-        gwp = _get_info_number(RP, refprop_fluid, z, "GWP")
+        gwp_raw = _get_info_number(RP, refprop_fluid, z, "GWP")
+        # REFPROP 流体文件用 GWP=-1 表示“不适用/零”，需转为 0
+        gwp = 0.0 if (gwp_raw is not None and gwp_raw < 0) else gwp_raw
         odp_raw = _get_info_number(RP, refprop_fluid, z, "ODP")
         # REFPROP 流体文件用 ODP=-1 表示“零/不消耗臭氧”，需转为 0
         odp = 0.0 if (odp_raw is not None and odp_raw < 0) else odp_raw
