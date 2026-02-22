@@ -23,10 +23,13 @@ KPA_TO_PA = 1000.0
 MOL_DM3_TO_MOL_M3 = 1000.0  # 1 mol/dm³ = 1000 mol/m³
 PA_S_TO_UPAS = 1e6  # 1 Pa·s = 1e6 µPa·s
 
-# 混合物别名：当服务器无预定义 .MIX 文件时，用组分形式等效替代
-# 摩尔分数按规范：R515B = R1234ze(E) + R227ea（REFPROP 10 流体名为 R1234ZEE）
+# 混合物别名：预定义混合物用组分形式等效，避免 REFPROP error 813
+# （813: 使用预定义混合物名时，传入的 z 必须与 .MIX 组分完全一致，否则报错）
+# 摩尔分数按规范，REFPROP 10 流体名：R1234ZEE, R1234YF 等
 BLEND_ALIASES: dict[str, str] = {
     "R515B": "R1234ZEE&R227EA|0.938&0.062",
+    # R454B = R32 + R1234yf，摩尔分数约 68.1% / 31.9%（AHRI 700 质量 68.9/31.1% 换算）
+    "R454B": "R32&R1234YF|0.681&0.319",
 }
 
 
@@ -161,7 +164,8 @@ def calculate_properties(
     if h_in[1] == "D":
         v2 *= MOL_DM3_TO_MOL_M3
 
-    # REFPROPdll: 输入类型、输出字符串、单位、iMass、iFlag、value1、value2、z
+    # REFPROPdll 会原地修改 z 数组（见 REFPROP-wrappers#229），传入副本避免污染
+    z_copy = list(z)
     r = RP.REFPROPdll(
         refprop_fluid,
         h_in,
@@ -171,7 +175,7 @@ def calculate_properties(
         0,  # iFlag
         v1,
         v2,
-        z,
+        z_copy,
     )
 
     # 严谨的 herr 错误捕获

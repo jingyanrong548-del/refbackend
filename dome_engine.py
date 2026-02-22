@@ -52,7 +52,7 @@ def _get_critical_point(
         iFlag,
         0.0,              # a, b: CRIT 时无需输入
         0.0,
-        z,
+        list(z),          # 副本，避免 REFPROP 原地修改 z
     )
     if r.ierr > 100:
         raise RuntimeError(f"获取临界点失败 (ierr={r.ierr}): {r.herr.strip()}")
@@ -72,7 +72,7 @@ def _get_eos_min_temperature(RP, refprop_fluid: str, z: List[float]) -> float:
         0,
         0.0,
         0.0,
-        z,
+        list(z),          # 副本，避免 REFPROP 原地修改 z
     )
     if r.ierr > 100:
         return T_MIN_FALLBACK  # 失败则使用默认最低温度
@@ -123,7 +123,7 @@ def _saturation_ph_at_t(
         0,
         t,                # a = T
         quality,          # b = Q (0 液线, 1 气线)
-        z,
+        list(z),          # 副本，避免 REFPROP 原地修改 z
     )
     if r.ierr > 100:
         raise RuntimeError(f"REFPROP 饱和计算失败 T={t} q={quality} (ierr={r.ierr}): {r.herr.strip()}")
