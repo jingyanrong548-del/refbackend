@@ -230,14 +230,20 @@ def get_fluid_info(
     if not is_mixture:
         safety_class = _get_info_string(RP, refprop_fluid, z, "SAFETY")
         gwp = _get_info_number(RP, refprop_fluid, z, "GWP")
-        odp = _get_info_number(RP, refprop_fluid, z, "ODP")
+        odp_raw = _get_info_number(RP, refprop_fluid, z, "ODP")
+        # REFPROP 流体文件用 ODP=-1 表示“零/不消耗臭氧”，需转为 0
+        odp = 0.0 if (odp_raw is not None and odp_raw < 0) else odp_raw
         cas_number = _get_info_string(RP, refprop_fluid, z, "CAS#")
         if mol_mass is None:
             mol_mass = _get_info_number(RP, refprop_fluid, z, "M")
 
-    # 混合物分子量：临界点调用已返回 M，若为空则用 ALLPROPS 补充
+    # 混合物分子量：临界点调用已返回 M，若为空则用 INFO 补充
     if mol_mass is None:
         mol_mass = _get_info_number(RP, refprop_fluid, z, "M", i_flag=1 if is_mixture else 0)
+
+    # REFPROP MOLAR_BASE_SI 返回分子量 [kg/mol]，API 约定为 [g/mol]，需乘以 1000
+    if mol_mass is not None and mol_mass < 10:
+        mol_mass = mol_mass * 1000.0
 
     return {
         "safety_class": safety_class,
